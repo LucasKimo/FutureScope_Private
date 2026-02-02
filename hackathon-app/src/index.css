@@ -1,0 +1,195 @@
+@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@400;700;800&display=swap');
+/* =========================
+   Base variables & reset
+   ========================= */
+:root{
+  --brand:#5956E1;
+  --brand-2:#4A47D5;
+  --bg:#F3F8FF;
+  --text:#0F1222;
+  --muted:#6B7280;
+  --card:#FFFFFF;
+  --border:#E6E8EE;
+  --shadow:0 8px 24px rgba(0,0,0,.06);
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family: 'Raleway', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color:var(--text);
+  background:var(--bg);
+  line-height:1.45;
+}
+
+/* =========================
+   Page container
+   ========================= */
+.gs-container{max-width:1120px; margin:24px auto; padding:0 16px}
+
+.gs-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+/* =========================
+   Steps progress
+   ========================= */
+.gs-steps-bar {
+  position: relative;
+  height: 8px;                 /* thicker for visibility */
+  background: #E5E7EB;         /* light gray track */
+  border-radius: 999px;
+  overflow: hidden;
+}
+.gs-steps-fill {
+  position: absolute;          /* overlay inside the track */
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0;                    /* default; Steps sets % via inline style */
+  background: linear-gradient(90deg, var(--brand) 0%, var(--brand-2) 100%);
+  transition: width 240ms ease;
+}
+.gs-steps-list {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  margin-top: 8px;
+}
+.gs-steps-list li.active {
+  font-weight: bold;
+  color: var(--brand);
+}
+
+/* =========================
+   Hero (title & subtitle)
+   ========================= */
+.gs-hero{text-align:center; margin:10px 0 18px}
+.gs-hero h1{margin:0; font-weight:800; font-size:28px}
+
+.gs-sub{margin-top:8px; color:var(--muted); font-size:14px}
+.gs-sublan{margin-top:8px; color:#FFFFFF; font-size:16px}
+
+.landing-bg {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #313B99 0%, #5062FE 100%);
+  color: white;
+  text-align: center;
+  padding: 2rem;
+}
+
+/* =========================
+   Summary card
+   ========================= */
+.gs-card{
+  background:var(--card);
+  border-radius:20px;
+  box-shadow:var(--shadow);
+  padding:18px;
+  margin:0 auto;
+  max-width:900px;
+}
+.gs-card-title{margin:0 0 10px; font-size:16px; font-weight:700}
+.gs-plan-box{
+  background:#FAFAFA;
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:12px;
+  font-size:14px;
+}
+
+/* =========================
+   Stats row
+   ========================= */
+.gs-stats{
+  display:flex; gap:16px; margin-top:16px; flex-wrap:wrap;
+}
+.gs-stat{
+  flex:1; min-width:120px;
+  border-radius:12px; padding:14px;
+  text-align:center; color:#fff; font-weight:600;
+}
+.gs-stat-num{font-size:20px; font-weight:800}
+.gs-stat-label{font-size:12px; opacity:.9}
+
+/* themed stat colors */
+.purple{background:#E8D9FF; color:#6B21A8}
+.blue  {background:#D6E4FF; color:#1E40AF}
+.green {background:#DCFCE7; color:#166534}
+.orange{background:#FFEED5; color:#B45309}
+
+/* =========================
+   Actions
+   ========================= */
+.gs-actions{
+  display:flex; gap:12px; margin-top:20px; justify-content:center;
+}
+.btn-outline{
+  padding:10px 20px; border:1px solid var(--border);
+  background:#cccccc; border-radius:8px; cursor:pointer;
+  color:#fff;
+}
+.btn-primary{
+  padding:10px 20px; border:none; border-radius:8px; cursor:pointer;
+  background:var(--brand); color:#fff; font-weight:700;
+}
+
+.btn-primary-landing {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background: #fff;
+  color: #313B99;
+  font-weight: 700;
+  font-family: 'Raleway', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+.btn-primary-landing:hover {
+  background: #f0f0f0;
+}
+
+/* =========================
+   Responsive tweaks
+   ========================= */
+@media (max-width:720px){
+  .gs-hero h1{font-size:22px}
+  .gs-stats{gap:10px}
+  .gs-stat{min-width:46%}
+}
+
+
+/* Top navigation (shared Header.js) */
+   
+.app-header{ 
+  background:#fff; 
+  box-shadow:var(--shadow);
+  position:sticky; 
+  top:0; 
+  z-index:40;
+}
+.app-header .brand{
+  max-width:1120px; 
+  margin:0 auto; 
+  padding:12px 20px; 
+  display:flex; 
+  align-items:center; 
+  gap:10px; 
+}
+.app-header .logo{
+  width:36px; 
+  height:36px; 
+  border-radius:12px; 
+  object-fit:contain; 
+  background:transparent;
+  padding:0;
+}
+.app-header .brand span{
+  font-weight:700;
+}

@@ -1,0 +1,14 @@
+
+# Security
+.env
+.env.*
+
+# dependencies & builds
+node_modules/
+**/.cache/
+dist/
+build/
+# logs & misc
+
+.DS_Store
+

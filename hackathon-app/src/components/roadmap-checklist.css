@@ -1,0 +1,70 @@
+/* Container & Progress Bar */
+.rc-wrap { margin-top: 8px; }
+.rc-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
+}
+.rc-progress { text-align: right; }
+.rc-progress-num { font-weight: 800; font-size: 18px; line-height: 1; }
+.rc-progress-sub { font-size: 12px; color: #6B7280; }
+
+/* Card Grid */
+.rc-grid { display: grid; gap: 12px; }
+.rc-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+/* Card Title */
+.rc-card-head {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+}
+.rc-level {
+  width: 28px; height: 28px; border-radius: 999px;
+  background: #EEF2FF; color: var(--brand);
+  display: grid; place-items: center; font-weight: 700;
+  flex: 0 0 28px;
+}
+.rc-title { font-weight: 800; font-size: 18px; }
+
+/* List & Items */
+.rc-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.rc-item { display: flex; align-items: center; }
+
+/* Customised Checkbox */
+.rc-check {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 14px; line-height: 1.4;
+  cursor: pointer; user-select: none;
+}
+.rc-check input {
+  position: absolute; opacity: 0; pointer-events: none;
+}
+.rc-box {
+  width: 18px; height: 18px; border-radius: 4px;
+  border: 1.5px solid var(--border);
+  background: #fff; display: inline-block; flex: 0 0 18px;
+  position: relative; transition: border-color 120ms, background 120ms;
+}
+.rc-check input:focus-visible + .rc-box {
+  outline: 2px solid rgba(59,130,246,.5); outline-offset: 2px;
+}
+.rc-check input:checked + .rc-box {
+  border-color: var(--brand); background: var(--brand);
+}
+.rc-check input:checked + .rc-box::after {
+  content: ''; position: absolute; left: 4px; top: 1px;
+  width: 6px; height: 10px; border: 2px solid #fff; border-top: 0; border-left: 0;
+  transform: rotate(45deg);
+}
+.rc-label { display: inline-block; }
+
+/* Tool Bar */
+.rc-toolbar {
+  display: flex; gap: 8px; margin-top: 12px;
+}
+.rc-import { position: relative; overflow: hidden; }
+.rc-import input {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer;
+}
