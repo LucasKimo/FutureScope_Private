@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Steps from '../components/Steps';
 import RoadmapChecklist from '../components/RoadmapChecklist';
+import { getEstimate } from '../services/estimateApi';
 
 export default function Knowledge() {
   const navigate = useNavigate();
@@ -9,16 +10,18 @@ export default function Knowledge() {
   const [goal, setGoal] = useState('');
   const [roadmap, setRoadmap] = useState(null);
   const [checked, setChecked] = useState({});
+  const [estimate, setEstimate] = useState(null);
+  const [estimating, setEstimating] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('lastRoadmap');
-    console.log(saved)
     if (saved) {
       try {
         const data = JSON.parse(saved);
         setGoal(data.goal || '');
         setRoadmap(data.roadmap || null);
         setChecked(data.checked || {});
+        setEstimate(data.estimate || null);
       } catch {
         console.error('Invalid lastRoadmap JSON');
       }
@@ -28,10 +31,32 @@ export default function Knowledge() {
   const onToggle = (id) => {
     const next = { ...checked, [id]: !checked[id] };
     setChecked(next);
-    localStorage.setItem('lastRoadmap', JSON.stringify({ goal, roadmap, checked: next }));
+    setEstimate(null);
+    localStorage.setItem('lastRoadmap', JSON.stringify({ goal, roadmap, checked: next, estimate: null }));
   };
 
-  // 상단 카드 진행률 (전체 카테고리 기준)
+  const handleContinueTimeline = async () => {
+    if (!roadmap) {
+      alert('Please generate a roadmap first.');
+      return;
+    }
+
+    setEstimating(true);
+    try {
+      const nextEstimate = await getEstimate({ goal, roadmap, checked });
+      setEstimate(nextEstimate);
+      localStorage.setItem(
+        'lastRoadmap',
+        JSON.stringify({ goal, roadmap, checked, estimate: nextEstimate })
+      );
+      navigate('/add_goals/timeline');
+    } catch (e) {
+      alert(e.message || 'Failed to calculate estimate. Please try again.');
+    } finally {
+      setEstimating(false);
+    }
+  };
+
   const totalItems = (roadmap?.categories || []).reduce(
     (sum, c) => sum + (c.items?.length || 0),
     0
@@ -46,20 +71,17 @@ export default function Knowledge() {
 
         <header className="gs-hero">
           <h1>
-            What’s Your <span style={{ color: 'var(--brand)' }}>Previous Knowledge</span>?
+            What Is Your <span style={{ color: 'var(--brand)' }}>Previous Knowledge</span>?
           </h1>
           <p className="gs-sub">Tell us about your current skills and experience related to your goal.</p>
           <p className="gs-sub" style={{ marginTop: 4 }}>Review and customize your milestones.</p>
         </header>
 
-        {/* Checklist Card */}
         <section className="gs-card" style={{ maxWidth: 940, marginTop: 24 }}>
-          {/* 라벨 */}
           <div style={{ marginBottom: 4, fontSize: 12, color: '#6B7280', fontWeight: 700 }}>
             Your Goal
           </div>
 
-          {/* 제목 ↔ 상단 진행률 한 줄 정렬 */}
           <div
             style={{
               display: 'flex',
@@ -92,14 +114,23 @@ export default function Knowledge() {
               showProgress={false}
             />
           )}
+
+          {estimate && (
+            <div style={{ marginTop: 12, fontSize: 13, color: '#374151' }}>
+              Latest estimate: about <strong>{estimate.total_hours}</strong> hours remaining.
+            </div>
+          )}
         </section>
 
-
-        {/* Footer */}
         <div className="gs-actions" style={{ marginTop: 24 }}>
           <button className="btn-outline" type="button">Save Draft</button>
-          <button className="btn-primary" type="button" onClick={() => navigate('/add_goals/timeline')}>
-            Continue to Timeline
+          <button
+            className="btn-primary"
+            type="button"
+            onClick={handleContinueTimeline}
+            disabled={!roadmap || estimating}
+          >
+            {estimating ? 'Calculating...' : 'Continue to Timeline'}
           </button>
         </div>
       </main>

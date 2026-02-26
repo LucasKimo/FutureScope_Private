@@ -1,15 +1,54 @@
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
-
-
-import { useNavigate } from 'react-router-dom';
+function formatDate(value) {
+  if (!value) return 'Not set';
+  const d = new Date(value);
+  if (isNaN(d)) return 'Not set';
+  return d.toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' });
+}
 
 export default function GoalSummary() {
-  const navigate = useNavigate(); // # React Router navigation hook
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const [goal, setGoal] = useState('Your goal');
+  const [roadmap, setRoadmap] = useState(null);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('lastRoadmap');
+    if (!saved) return;
+
+    try {
+      const data = JSON.parse(saved);
+      setGoal(data.goal || 'Your goal');
+      setRoadmap(data.roadmap || null);
+    } catch {
+      console.error('Invalid lastRoadmap JSON');
+    }
+  }, []);
+
+  const start = location.state?.start;
+  const end = location.state?.end;
+  const hours = Number(location.state?.hours || 0);
+  const totalHours = Number(location.state?.totalHours || 0);
+
+  const months = useMemo(() => {
+    if (!start || !end) return null;
+    const s = new Date(start);
+    const e = new Date(end);
+    if (isNaN(s) || isNaN(e) || e < s) return null;
+    const days = Math.round((e - s) / (1000 * 60 * 60 * 24));
+    return Math.max(1, Math.round(days / 30.44));
+  }, [start, end]);
+
+  const milestoneCount = useMemo(() => {
+    return (roadmap?.categories || []).reduce((sum, c) => sum + (c.items?.length || 0), 0);
+  }, [roadmap]);
 
   return (
     <div className="gs-page">
       <main className="gs-container">
-        {/* # Step progress bar + labels */}
         <div className="gs-steps">
           <div className="gs-steps-bar">
             <div className="gs-steps-fill" style={{ width: '100%' }} />
@@ -23,62 +62,47 @@ export default function GoalSummary() {
           </ul>
         </div>
 
-        {/* # Page hero */}
         <header className="gs-hero">
-          <h1>Almost There! Here’s Your<br/>Goal Summary &amp; Roadmap</h1>
-          <p className="gs-sub">
-            Ready to see your roadmap and progress at a glance?
-          </p>
+          <h1>Almost There! Here Is Your<br />Goal Summary &amp; Roadmap</h1>
+          <p className="gs-sub">Ready to see your roadmap and progress at a glance?</p>
         </header>
 
-        {/* # Main summary card */}
         <section className="gs-card" aria-labelledby="summary-title">
           <h3 id="summary-title" className="gs-card-title">Your Personalised Plan</h3>
 
-          {/* # Plan description box */}
           <div className="gs-plan-box">
             <p>
-              Based on your goal: <strong>“Master Python in 1 month”</strong>,
-              starting <strong>10 August, 2025</strong> and ending <strong>1 January, 2026</strong>,
-              with your dedication of <strong>15 hours/week</strong> and current knowledge level.
+              Based on your goal: <strong>{goal}</strong>, starting <strong>{formatDate(start)}</strong> and ending{' '}
+              <strong>{formatDate(end)}</strong>, with your dedication of <strong>{hours || 'N/A'} hours/week</strong>
+              .
             </p>
           </div>
 
-          {/* # Stats row */}
           <div className="gs-stats" role="list">
             <div className="gs-stat purple" role="listitem">
-              <div className="gs-stat-num">4</div>
+              <div className="gs-stat-num">{months || '-'}</div>
               <div className="gs-stat-label">Month</div>
             </div>
             <div className="gs-stat blue" role="listitem">
-              <div className="gs-stat-num">15</div>
+              <div className="gs-stat-num">{hours || '-'}</div>
               <div className="gs-stat-label">Hours/week</div>
             </div>
             <div className="gs-stat green" role="listitem">
-              <div className="gs-stat-num">5</div>
+              <div className="gs-stat-num">{milestoneCount || '-'}</div>
               <div className="gs-stat-label">Milestones</div>
             </div>
             <div className="gs-stat orange" role="listitem">
-              <div className="gs-stat-num">200</div>
+              <div className="gs-stat-num">{totalHours || '-'}</div>
               <div className="gs-stat-label">Total hours</div>
             </div>
           </div>
         </section>
 
-        {/* # Actions */}
         <div className="gs-actions">
-          <button
-            className="btn-outline"
-            type="button"
-            onClick={() => navigate(-1)}
-          >
+          <button className="btn-outline" type="button" onClick={() => navigate(-1)}>
             Back
           </button>
-          <button
-            className="btn-primary"
-            type="button"
-            onClick={() => navigate('/main_dashboard')} // # Go to main dashboard
-          >
+          <button className="btn-primary" type="button" onClick={() => navigate('/main_dashboard')}>
             View My Dashboard
           </button>
         </div>
@@ -86,4 +110,3 @@ export default function GoalSummary() {
     </div>
   );
 }
-
