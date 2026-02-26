@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 export default function Steps({ active = 1 }) {
   const steps = useMemo(() => (
-    ['Your Goal', 'Knowledge', 'Commitment', 'Timeline', 'Summary']
+    ['Your Goal', 'Knowledge', 'Timeline', 'Commitment', 'Summary']
   ), []);
 
   const pct = Math.min(100, Math.max(0, (active / steps.length) * 100));

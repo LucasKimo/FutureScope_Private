@@ -31,7 +31,7 @@ export default function SetDate() {
 
       <main className="gs-container">
         {/* # Step progress */}
-        <Steps active={4} />
+        <Steps active={3} />
 
         {/* # Title + subtitle */}
         <header className="gs-hero">

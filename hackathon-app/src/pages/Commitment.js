@@ -34,7 +34,7 @@ export default function DedicatedTime() {
     <div className="gs-page">
       <main className="gs-container">
         {/* # Steps (Commitment active) */}
-        <Steps active={3} />
+        <Steps active={4} />
 
         {/* # Title + subtitle */}
         <header className="gs-hero">

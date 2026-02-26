@@ -7,7 +7,7 @@ export default function AddGoals() {
   const navigate = useNavigate();
 
   const [goal, setGoal] = useState('');
-  const [loading, setLoading] = useState(false);   // 생성/이동 중 버튼 비활성화용
+  const [loading, setLoading] = useState(false); 
 
   // goal 기반 로컬 스토리지 키 (체크 상태 저장용)
   function hashGoal(s) {
@@ -21,7 +21,7 @@ export default function AddGoals() {
     catch { return {}; }
   };
 
-  // ✅ Continue 클릭 시: 자동 생성 → localStorage 저장 → Knowledge로 이동
+  // Continue 클릭 시: 자동 생성 → localStorage 저장 → Knowledge로 이동
   const handleContinue = async () => {
     const g = goal.trim();
     if (!g) {
@@ -48,7 +48,7 @@ export default function AddGoals() {
   };
 
   return (
-    <div className="gs-page">
+    <div className="gs-page-add-goals">
       <main className="gs-container">
         <Steps active={1} />
 

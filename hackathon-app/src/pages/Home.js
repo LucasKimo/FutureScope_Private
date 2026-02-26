@@ -12,7 +12,7 @@ const Home = () => {
   return (
     <div className="landing-bg">
       <section className="gs-hero">
-        <img src={HeroLogo} alt="FutureScope Logo" className="hero-logo" />
+        <img src={HeroLogo} alt="FutureScope Logo" className="hero-logo select-none" />
         <h1 style={{ fontSize: '64px', fontWeight: 800 }}>
           Turn Your Future Goals Into
           <br />

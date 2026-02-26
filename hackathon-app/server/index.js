@@ -45,7 +45,7 @@ Return JSON in the shape:
 `.trim();
 
     const resp = await client.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-4.1-mini',
       temperature: 0.4,
       messages: [
         { role: 'system', content: 'Return valid JSON only. No explanations.' },

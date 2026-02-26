@@ -17,8 +17,7 @@
 html, body{
   margin: 0;
   padding: 0;
-  height: 100%;
-  overflow: hidden;
+  min-height: 100vh;
   width: 100%;  
 }
 body{
@@ -33,14 +32,18 @@ body{
    ========================= */
 .gs-container{max-width:1120px; margin:24px auto; padding:0 16px}
 
-.gs-page {
+.gs-page, .gs-page-add-goals {
   min-height: 100vh;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 2rem;
 }
 
+.gs-page-add-goals {
+  position: fixed;  
+}
 /* =========================
    Steps progress
    ========================= */
@@ -77,11 +80,12 @@ body{
 .gs-hero{text-align:center; margin:10px 0 18px}
 .gs-hero h1{margin:0; font-weight:800; font-size:28px}
 
-.gs-sub{margin-top:8px; color:var(--muted); font-size:14px}
+.gs-sub{margin-top:30px; color:black; font-size:14px}
 .gs-sublan{margin-top:8px; color:#FFFFFF; font-size:16px}
 
 .landing-bg {
-  min-height: 100vh;
+  height: 100vh;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -90,6 +94,7 @@ body{
   text-align: center;
   padding: 2rem;
   overflow: hidden;
+  position: fixed;
 }
 
 /* =========================
