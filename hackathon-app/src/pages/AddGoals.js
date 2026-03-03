@@ -2,9 +2,12 @@ import { useState, useMemo } from 'react';
 import { getRoadmap } from '../services/roadmapApi';
 import { useNavigate } from 'react-router-dom';
 import Steps from '../components/Steps';
+import { useAuth } from '../auth/AuthContext';
+import { writeLastRoadmap } from '../services/persist';
 
 export default function AddGoals() {
   const navigate = useNavigate();
+  const { token } = useAuth();
 
   const [goal, setGoal] = useState('');
   const [loading, setLoading] = useState(false); 
@@ -36,7 +39,7 @@ export default function AddGoals() {
       const checked = loadChecks(); // 같은 목표로 이전 체크 내역이 있으면 복원
 
       // Knowledge 페이지에서 사용할 데이터 저장
-      localStorage.setItem('lastRoadmap', JSON.stringify({ goal: g, roadmap, checked }));
+      await writeLastRoadmap({ goal: g, roadmap, checked }, token);
 
       // 다음 페이지로 이동
       navigate('/add_goals/previous_knowledge');

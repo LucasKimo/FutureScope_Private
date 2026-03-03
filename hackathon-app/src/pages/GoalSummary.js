@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../auth/AuthContext';
+import { hydrateLastRoadmapFromServer, readLastRoadmap } from '../services/persist';
 
 function formatDate(value) {
   if (!value) return 'Not set';
@@ -11,22 +13,30 @@ function formatDate(value) {
 export default function GoalSummary() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { token } = useAuth();
 
   const [goal, setGoal] = useState('Your goal');
   const [roadmap, setRoadmap] = useState(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem('lastRoadmap');
-    if (!saved) return;
-
-    try {
-      const data = JSON.parse(saved);
-      setGoal(data.goal || 'Your goal');
-      setRoadmap(data.roadmap || null);
-    } catch {
-      console.error('Invalid lastRoadmap JSON');
+    const local = readLastRoadmap();
+    if (local) {
+      setGoal(local.goal || 'Your goal');
+      setRoadmap(local.roadmap || null);
     }
-  }, []);
+
+    let active = true;
+    (async () => {
+      if (!token) return;
+      const remote = await hydrateLastRoadmapFromServer(token);
+      if (!active || !remote) return;
+      setGoal(remote.goal || 'Your goal');
+      setRoadmap(remote.roadmap || null);
+    })();
+    return () => {
+      active = false;
+    };
+  }, [token]);
 
   const start = location.state?.start;
   const end = location.state?.end;
