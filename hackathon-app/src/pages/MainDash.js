@@ -7,6 +7,19 @@ const priorityColor = {
   low: '#2563EB'
 };
 
+const priorityRank = {
+  high: 3,
+  medium: 2,
+  low: 1
+};
+
+const normalizePriority = (value) => {
+  const next = String(value || '').toLowerCase();
+  return ['high', 'medium', 'low'].includes(next) ? next : 'medium';
+};
+
+const normalizeTitle = (value) => String(value || '').trim().toLowerCase();
+
 function readDashboardSeed() {
   try {
     const raw = localStorage.getItem('lastRoadmap');
@@ -98,20 +111,53 @@ export default function MainDash() {
   const doneItems = flatItems.filter((x) => x.done).length;
   const remainingItems = Math.max(0, totalItems - doneItems);
   const progressPct = totalItems ? Math.round((doneItems / totalItems) * 100) : 0;
+  const progressSafe = Math.max(0, Math.min(100, progressPct));
+
+  const roadmapPriorityById = useMemo(() => {
+    const aiMilestones = dashboard?.next_milestones || [];
+    const aiPriorityByTitle = new Map(
+      aiMilestones.map((m) => [normalizeTitle(m.title), normalizePriority(m.priority)])
+    );
+
+    const total = flatItems.length;
+    const highCutoff = Math.ceil(total / 3);
+    const mediumCutoff = Math.ceil((2 * total) / 3);
+    const map = new Map();
+
+    flatItems.forEach((item, index) => {
+      let fallbackPriority = 'medium';
+      if (total >= 3) {
+        if (index < highCutoff) fallbackPriority = 'high';
+        else if (index < mediumCutoff) fallbackPriority = 'medium';
+        else fallbackPriority = 'low';
+      } else if (total === 2) {
+        fallbackPriority = index === 0 ? 'high' : 'medium';
+      } else if (total === 1) {
+        fallbackPriority = 'high';
+      }
+
+      map.set(item.id, aiPriorityByTitle.get(normalizeTitle(item.label)) || fallbackPriority);
+    });
+
+    return map;
+  }, [flatItems, dashboard]);
 
   const nextMilestones = useMemo(() => {
-    const pending = flatItems
+    return flatItems
       .filter((x) => !x.done)
-      .slice(0, 3)
       .map((x, index) => ({
+        _order: index,
         title: x.label,
-        reason: `Focus on ${x.category.toLowerCase()} next.`,
-        priority: index === 0 ? 'high' : index === 1 ? 'medium' : 'low'
-      }));
-
-    if (pending.length > 0) return pending;
-    return (dashboard?.next_milestones || []).slice(0, 3);
-  }, [flatItems, dashboard]);
+        reason: `Pending in ${x.category}.`,
+        priority: roadmapPriorityById.get(x.id) || 'medium'
+      }))
+      .sort((a, b) => {
+        const diff = priorityRank[b.priority] - priorityRank[a.priority];
+        return diff || a._order - b._order;
+      })
+      .slice(0, 3)
+      .map(({ _order, ...item }) => item);
+  }, [flatItems, roadmapPriorityById]);
 
   const timeframeMonths = seed?.roadmap?.timeframe_months;
   const hasMoreThanFive = flatItems.length > 5;
@@ -159,17 +205,21 @@ export default function MainDash() {
               <div style={{ background: 'rgba(255,255,255,.12)', borderRadius: 14, padding: 14, display: 'grid', placeItems: 'center' }}>
                 <div style={{ position: 'relative', width: 96, height: 96 }}>
                   <svg viewBox="0 0 36 36" style={{ width: 96, height: 96 }}>
-                    <path d="M18 2a16 16 0 1 1 0 32 16 16 0 0 1 0-32" fill="none" stroke="white" strokeOpacity=".25" strokeWidth="4" />
-                    <path
-                      d="M18 2a16 16 0 1 1 0 32"
+                    <circle cx="18" cy="18" r="15.9155" fill="none" stroke="white" strokeOpacity=".25" strokeWidth="4" />
+                    <circle
+                      cx="18"
+                      cy="18"
+                      r="15.9155"
                       fill="none"
                       stroke="white"
                       strokeWidth="4"
-                      strokeDasharray={`${progressPct} ${100 - progressPct}`}
+                      pathLength="100"
+                      strokeDasharray={`${progressSafe} ${100 - progressSafe}`}
+                      transform="rotate(-90 18 18)"
                     />
                   </svg>
                   <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', fontSize: 14 }}>
-                    <div style={{ fontWeight: 800 }}>{progressPct}%</div>
+                    <div style={{ fontWeight: 800 }}>{progressSafe}%</div>
                     <div style={{ opacity: 0.85, fontSize: 12, marginTop: -30 }}>progress</div>
                   </div>
                 </div>
@@ -188,31 +238,37 @@ export default function MainDash() {
 
           <div style={{ background: '#fff', color: '#0f172a', borderRadius: 14, padding: 14, boxShadow: 'var(--shadow)' }}>
             <h4 style={{ margin: '0 0 10px', fontWeight: 700 }}>Next 3 Milestones</h4>
-            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 10 }}>
-              {nextMilestones.map((m) => (
-                <li
-                  key={m.title}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    border: '1px solid var(--border)',
-                    borderRadius: 12,
-                    padding: '10px 12px',
-                    background: '#fff',
-                    gap: 10
-                  }}
-                >
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 600 }}>{m.title}</div>
-                    <div style={{ fontSize: 12, color: '#64748B' }}>{m.reason}</div>
-                  </div>
-                  <span style={{ color: priorityColor[m.priority] || '#2563EB', fontWeight: 700, textTransform: 'uppercase', fontSize: 12 }}>
-                    {m.priority || 'medium'}
-                  </span>
-                </li>
-              ))}
-            </ul>
+            {nextMilestones.length === 0 ? (
+              <p style={{ margin: 0, fontSize: 13, color: '#64748B' }}>
+                All Learning Roadmap tasks are completed.
+              </p>
+            ) : (
+              <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 10 }}>
+                {nextMilestones.map((m) => (
+                  <li
+                    key={m.title}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      border: '1px solid var(--border)',
+                      borderRadius: 12,
+                      padding: '10px 12px',
+                      background: '#fff',
+                      gap: 10
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 600 }}>{m.title}</div>
+                      <div style={{ fontSize: 12, color: '#64748B' }}>{m.reason}</div>
+                    </div>
+                    <span style={{ color: priorityColor[m.priority] || '#2563EB', fontWeight: 700, textTransform: 'uppercase', fontSize: 12 }}>
+                      {m.priority || 'medium'}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </section>
 
@@ -233,8 +289,20 @@ export default function MainDash() {
                     aria-label={item.label}
                     style={{ marginTop: 4 }}
                   />
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 600 }}>{item.label}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600 }}>{item.label}</div>
+                      <span
+                        style={{
+                          color: priorityColor[roadmapPriorityById.get(item.id) || 'medium'] || '#2563EB',
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                          fontSize: 11
+                        }}
+                      >
+                        {roadmapPriorityById.get(item.id) || 'medium'}
+                      </span>
+                    </div>
                     <div style={{ fontSize: 12, color: item.done ? '#16A34A' : 'var(--brand)' }}>
                       {item.done ? 'Completed' : 'In Progress'}
                     </div>

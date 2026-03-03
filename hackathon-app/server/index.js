@@ -219,8 +219,10 @@ Return ONLY valid JSON.
 Rules:
 - daily_insight: 1 sentence, max 26 words.
 - focus_recommendation: 1 sentence, max 22 words.
-- next_milestones: exactly 3 actionable items that are likely next priorities.
+- next_milestones: exactly 3 actionable items selected from incomplete checklist items only.
+- Analyze the checklist completion state and rank the 3 by impact/importance for the user's goal.
 - priority must be one of: high, medium, low.
+- Use exactly one "high", one "medium", and one "low" priority.
 - No markdown. No extra keys.
 
 Goal: "${goal}"
