@@ -297,13 +297,14 @@ export default function MainDash() {
               {visibleRoadmapItems.map((item) => (
                 <li key={item.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
                   <input
+                    id={`roadmap-check-${item.id}`}
                     type="checkbox"
                     checked={item.done}
                     onChange={() => handleChecklistToggle(item.id)}
                     aria-label={item.label}
                     style={{ marginTop: 4 }}
                   />
-                  <div style={{ flex: 1 }}>
+                  <label htmlFor={`roadmap-check-${item.id}`} style={{ flex: 1, cursor: 'pointer' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                       <div style={{ fontSize: 14, fontWeight: 600 }}>{item.label}</div>
                       <span
@@ -320,7 +321,7 @@ export default function MainDash() {
                     <div style={{ fontSize: 12, color: item.done ? '#16A34A' : 'var(--brand)' }}>
                       {item.done ? 'Completed' : 'In Progress'}
                     </div>
-                  </div>
+                  </label>
                 </li>
               ))}
               {!flatItems.length && <li style={{ fontSize: 14, color: '#64748B' }}>No roadmap loaded yet.</li>}
