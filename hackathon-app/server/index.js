@@ -2,12 +2,20 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import OpenAI from 'openai';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { createPool } from './db.js';
+import { hashPassword, verifyPassword, signToken, requireAuth } from './auth.js';
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const pool = createPool();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const isValidRoadmap = (data) => data && typeof data === 'object' && Array.isArray(data.categories);
 const isValidEstimate = (data) =>
@@ -68,6 +76,104 @@ const fallbackDashboard = ({ goal, estimate, items }) => {
     next_milestones
   };
 };
+
+function normalizeEmail(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function isValidPassword(pw) {
+  return typeof pw === 'string' && pw.length >= 8;
+}
+
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const email = normalizeEmail(req.body?.email);
+    const password = req.body?.password;
+
+    if (!isValidEmail(email)) return res.status(400).json({ error: 'Please provide a valid email.' });
+    if (!isValidPassword(password)) return res.status(400).json({ error: 'Password must be at least 8 characters.' });
+
+    const password_hash = await hashPassword(password);
+
+    const created = await pool.query(
+      'INSERT INTO app_users (email, password_hash) VALUES ($1, $2) RETURNING id, email',
+      [email, password_hash]
+    );
+
+    const user = created.rows[0];
+    const token = signToken({ userId: user.id, email: user.email });
+    return res.json({ token, user });
+  } catch (e) {
+    // Unique violation
+    if (e && e.code === '23505') return res.status(409).json({ error: 'Email already exists.' });
+    console.error(e);
+    return res.status(500).json({ error: 'Registration failed.' });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const email = normalizeEmail(req.body?.email);
+    const password = req.body?.password;
+
+    if (!isValidEmail(email)) return res.status(400).json({ error: 'Please provide a valid email.' });
+    if (typeof password !== 'string') return res.status(400).json({ error: 'Missing password.' });
+
+    const found = await pool.query('SELECT id, email, password_hash FROM app_users WHERE email = $1', [email]);
+    const row = found.rows[0];
+    if (!row) return res.status(401).json({ error: 'Invalid email or password.' });
+
+    const ok = await verifyPassword(password, row.password_hash);
+    if (!ok) return res.status(401).json({ error: 'Invalid email or password.' });
+
+    const token = signToken({ userId: row.id, email: row.email });
+    return res.json({ token, user: { id: row.id, email: row.email } });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ error: 'Login failed.' });
+  }
+});
+
+app.get('/api/me', requireAuth, async (req, res) => {
+  return res.json({ user: req.user });
+});
+
+app.get('/api/state', requireAuth, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT state FROM user_state WHERE user_id = $1', [req.user.id]);
+    const state = result.rows[0]?.state || null;
+    return res.json({ state });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ error: 'Failed to load saved state.' });
+  }
+});
+
+app.put('/api/state', requireAuth, async (req, res) => {
+  try {
+    const state = req.body?.state;
+    if (!state || typeof state !== 'object' || Array.isArray(state)) {
+      return res.status(400).json({ error: 'state must be a JSON object.' });
+    }
+
+    await pool.query(
+      `INSERT INTO user_state (user_id, state, updated_at)
+       VALUES ($1, $2::jsonb, now())
+       ON CONFLICT (user_id)
+       DO UPDATE SET state = EXCLUDED.state, updated_at = now()`,
+      [req.user.id, JSON.stringify(state)]
+    );
+
+    return res.json({ ok: true });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ error: 'Failed to save state.' });
+  }
+});
 
 app.post('/api/roadmap', async (req, res) => {
   try {
@@ -287,4 +393,12 @@ Return JSON in this exact shape:
 });
 
 const PORT = Number(process.env.PORT || 5174);
+
+// Serve CRA build in production (one origin for API + UI).
+if (process.env.NODE_ENV === 'production') {
+  const buildDir = path.join(__dirname, '..', 'build');
+  app.use(express.static(buildDir));
+  app.get('*', (req, res) => res.sendFile(path.join(buildDir, 'index.html')));
+}
+
 app.listen(PORT, () => console.log(`Roadmap API running on port ${PORT}`));

@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getDashboardData } from '../services/dashboardApi';
+import { useAuth } from '../auth/AuthContext';
+import { hydrateLastRoadmapFromServer, readLastRoadmap, writeLastRoadmap } from '../services/persist';
 
 const priorityColor = {
   high: '#DC2626',
@@ -21,22 +23,18 @@ const normalizePriority = (value) => {
 const normalizeTitle = (value) => String(value || '').trim().toLowerCase();
 
 function readDashboardSeed() {
-  try {
-    const raw = localStorage.getItem('lastRoadmap');
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    return {
-      goal: parsed.goal || '',
-      roadmap: parsed.roadmap || null,
-      checked: parsed.checked || {},
-      estimate: parsed.estimate || null
-    };
-  } catch {
-    return null;
-  }
+  const parsed = readLastRoadmap();
+  if (!parsed) return null;
+  return {
+    goal: parsed.goal || '',
+    roadmap: parsed.roadmap || null,
+    checked: parsed.checked || {},
+    estimate: parsed.estimate || null
+  };
 }
 
 export default function MainDash() {
+  const { token } = useAuth();
   const [seed, setSeed] = useState(null);
   const [checked, setChecked] = useState({});
   const [dashboard, setDashboard] = useState(null);
@@ -45,22 +43,38 @@ export default function MainDash() {
   const [showAllRoadmap, setShowAllRoadmap] = useState(false);
 
   useEffect(() => {
-    const next = readDashboardSeed();
-    setSeed(next);
-    setChecked(next?.checked || {});
-
-    if (!next?.goal || !next?.roadmap) {
-      setLoading(false);
-      setError('No goal data found. Complete the setup flow first.');
-      return;
-    }
-
     let active = true;
 
     const run = async () => {
       setLoading(true);
       setError('');
       try {
+        const local = readDashboardSeed();
+        if (active) {
+          setSeed(local);
+          setChecked(local?.checked || {});
+        }
+
+        let next = local;
+        if (token) {
+          const remote = await hydrateLastRoadmapFromServer(token);
+          if (active && remote) {
+            next = {
+              goal: remote.goal || '',
+              roadmap: remote.roadmap || null,
+              checked: remote.checked || {},
+              estimate: remote.estimate || null
+            };
+            setSeed(next);
+            setChecked(next.checked || {});
+          }
+        }
+
+        if (!next?.goal || !next?.roadmap) {
+          if (active) setError('No goal data found. Complete the setup flow first.');
+          return;
+        }
+
         const data = await getDashboardData(next);
         if (active) setDashboard(data);
       } catch (e) {
@@ -74,7 +88,7 @@ export default function MainDash() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [token]);
 
   const handleChecklistToggle = (id) => {
     setChecked((prev) => {
@@ -82,14 +96,14 @@ export default function MainDash() {
       setSeed((prevSeed) => {
         if (!prevSeed) return prevSeed;
         const updated = { ...prevSeed, checked: nextChecked };
-        localStorage.setItem(
-          'lastRoadmap',
-          JSON.stringify({
+        writeLastRoadmap(
+          {
             goal: updated.goal,
             roadmap: updated.roadmap,
             checked: nextChecked,
             estimate: updated.estimate || null
-          })
+          },
+          token
         );
         return updated;
       });
@@ -283,13 +297,14 @@ export default function MainDash() {
               {visibleRoadmapItems.map((item) => (
                 <li key={item.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
                   <input
+                    id={`roadmap-check-${item.id}`}
                     type="checkbox"
                     checked={item.done}
                     onChange={() => handleChecklistToggle(item.id)}
                     aria-label={item.label}
                     style={{ marginTop: 4 }}
                   />
-                  <div style={{ flex: 1 }}>
+                  <label htmlFor={`roadmap-check-${item.id}`} style={{ flex: 1, cursor: 'pointer' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                       <div style={{ fontSize: 14, fontWeight: 600 }}>{item.label}</div>
                       <span
@@ -306,7 +321,7 @@ export default function MainDash() {
                     <div style={{ fontSize: 12, color: item.done ? '#16A34A' : 'var(--brand)' }}>
                       {item.done ? 'Completed' : 'In Progress'}
                     </div>
-                  </div>
+                  </label>
                 </li>
               ))}
               {!flatItems.length && <li style={{ fontSize: 14, color: '#64748B' }}>No roadmap loaded yet.</li>}

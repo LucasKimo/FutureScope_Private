@@ -3,9 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import Steps from '../components/Steps';
 import RoadmapChecklist from '../components/RoadmapChecklist';
 import { getEstimate } from '../services/estimateApi';
+import { useAuth } from '../auth/AuthContext';
+import { hydrateLastRoadmapFromServer, readLastRoadmap, writeLastRoadmap } from '../services/persist';
 
 export default function Knowledge() {
   const navigate = useNavigate();
+  const { token } = useAuth();
 
   const [goal, setGoal] = useState('');
   const [roadmap, setRoadmap] = useState(null);
@@ -14,25 +17,35 @@ export default function Knowledge() {
   const [estimating, setEstimating] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem('lastRoadmap');
-    if (saved) {
-      try {
-        const data = JSON.parse(saved);
-        setGoal(data.goal || '');
-        setRoadmap(data.roadmap || null);
-        setChecked(data.checked || {});
-        setEstimate(data.estimate || null);
-      } catch {
-        console.error('Invalid lastRoadmap JSON');
-      }
+    const local = readLastRoadmap();
+    if (local) {
+      setGoal(local.goal || '');
+      setRoadmap(local.roadmap || null);
+      setChecked(local.checked || {});
+      setEstimate(local.estimate || null);
     }
-  }, []);
+
+    let active = true;
+    (async () => {
+      if (!token) return;
+      const remote = await hydrateLastRoadmapFromServer(token);
+      if (!active || !remote) return;
+      setGoal(remote.goal || '');
+      setRoadmap(remote.roadmap || null);
+      setChecked(remote.checked || {});
+      setEstimate(remote.estimate || null);
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [token]);
 
   const onToggle = (id) => {
     const next = { ...checked, [id]: !checked[id] };
     setChecked(next);
     setEstimate(null);
-    localStorage.setItem('lastRoadmap', JSON.stringify({ goal, roadmap, checked: next, estimate: null }));
+    writeLastRoadmap({ goal, roadmap, checked: next, estimate: null }, token);
   };
 
   const handleContinueTimeline = async () => {
@@ -45,10 +58,7 @@ export default function Knowledge() {
     try {
       const nextEstimate = await getEstimate({ goal, roadmap, checked });
       setEstimate(nextEstimate);
-      localStorage.setItem(
-        'lastRoadmap',
-        JSON.stringify({ goal, roadmap, checked, estimate: nextEstimate })
-      );
+      await writeLastRoadmap({ goal, roadmap, checked, estimate: nextEstimate }, token);
       navigate('/add_goals/timeline');
     } catch (e) {
       alert(e.message || 'Failed to calculate estimate. Please try again.');

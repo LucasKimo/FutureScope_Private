@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Steps from '../components/Steps';
+import { useAuth } from '../auth/AuthContext';
+import { hydrateLastRoadmapFromServer, readLastRoadmap } from '../services/persist';
 
 export default function SetDate() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { token } = useAuth();
 
   const [start, setStart] = useState('');
   const [end, setEnd] = useState('');
@@ -12,17 +15,24 @@ export default function SetDate() {
   const [estimate, setEstimate] = useState(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem('lastRoadmap');
-    if (!saved) return;
-
-    try {
-      const data = JSON.parse(saved);
-      setGoal(data.goal || '');
-      setEstimate(data.estimate || null);
-    } catch {
-      console.error('Invalid lastRoadmap JSON');
+    const local = readLastRoadmap();
+    if (local) {
+      setGoal(local.goal || '');
+      setEstimate(local.estimate || null);
     }
-  }, []);
+
+    let active = true;
+    (async () => {
+      if (!token) return;
+      const remote = await hydrateLastRoadmapFromServer(token);
+      if (!active || !remote) return;
+      setGoal(remote.goal || '');
+      setEstimate(remote.estimate || null);
+    })();
+    return () => {
+      active = false;
+    };
+  }, [token]);
 
   const initialHours = location.state?.hours || estimate?.suggested_hours_per_week?.mid || 7;
   const hours = Number(initialHours);

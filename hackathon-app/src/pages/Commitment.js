@@ -1,27 +1,39 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Steps from '../components/Steps';
+import { useAuth } from '../auth/AuthContext';
+import { hydrateLastRoadmapFromServer, readLastRoadmap } from '../services/persist';
 
 export default function DedicatedTime() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { token } = useAuth();
 
   const [estimate, setEstimate] = useState(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem('lastRoadmap');
-    if (!saved) return;
+    const local = readLastRoadmap();
+    if (local) setEstimate(local.estimate || null);
 
-    try {
-      const data = JSON.parse(saved);
-      setEstimate(data.estimate || null);
-    } catch {
-      console.error('Invalid lastRoadmap JSON');
-    }
-  }, []);
+    let active = true;
+    (async () => {
+      if (!token) return;
+      const remote = await hydrateLastRoadmapFromServer(token);
+      if (!active || !remote) return;
+      setEstimate(remote.estimate || null);
+    })();
+    return () => {
+      active = false;
+    };
+  }, [token]);
 
-  const start = location.state?.start ? new Date(location.state.start) : null;
-  const end = location.state?.end ? new Date(location.state.end) : null;
+  const start = useMemo(() => {
+    return location.state?.start ? new Date(location.state.start) : null;
+  }, [location.state?.start]);
+
+  const end = useMemo(() => {
+    return location.state?.end ? new Date(location.state.end) : null;
+  }, [location.state?.end]);
 
   const weeks = useMemo(() => {
     if (!start || !end || isNaN(start) || isNaN(end) || end < start) return 26;
