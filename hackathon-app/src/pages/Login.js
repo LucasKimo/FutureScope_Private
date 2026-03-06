@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import { readLastRoadmap } from '../services/persist';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -13,14 +14,22 @@ export default function Login() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
-  const nextPath = useMemo(() => {
+  const fromPath = useMemo(() => {
     const from = location.state?.from;
-    return typeof from === 'string' && from.startsWith('/') ? from : '/add_goals';
+    return typeof from === 'string' && from.startsWith('/') ? from : '';
   }, [location.state]);
 
+  const resolveNextPath = useCallback(() => {
+    if (fromPath) return fromPath;
+
+    const seed = readLastRoadmap();
+    const hasDashboard = Boolean(seed?.goal) && Boolean(seed?.roadmap);
+    return hasDashboard ? '/main_dashboard' : '/add_goals';
+  }, [fromPath]);
+
   useEffect(() => {
-    if (!loading && token) navigate(nextPath, { replace: true });
-  }, [loading, token, nextPath, navigate]);
+    if (!loading && token) navigate(resolveNextPath(), { replace: true });
+  }, [loading, token, resolveNextPath, navigate]);
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -30,7 +39,7 @@ export default function Login() {
       if (mode === 'register') await register(email, password);
       else await login(email, password);
 
-      navigate(nextPath, { replace: true });
+      navigate(resolveNextPath(), { replace: true });
     } catch (e2) {
       setError(e2.message || 'Authentication failed.');
     } finally {

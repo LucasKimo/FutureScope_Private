@@ -1,24 +1,28 @@
-import { Link } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import icon from './icon_app.svg';
 import { useAuth } from '../auth/AuthContext';
 
 export default function Header() {
-  const { user, token, logout } = useAuth();
+  const { token, logout } = useAuth();
+
   return (
     <header className="app-header">
       <div className="brand" style={{ justifyContent: 'space-between' }}>
         <Link to="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit', gap: '8px' }}>
           <img src={icon} alt="FutureScope" className="logo" />
-          <span>FutureScope</span>
+          <span>Future Scope</span>
         </Link>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 40 }}>
           {token ? (
             <>
-              <span style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 700 }}>
-                {user?.email || 'Signed in'}
-              </span>
-              <button className="btn-outline" type="button" onClick={logout} style={{ padding: '8px 12px' }}>
+              <NavLink
+                to="/main_dashboard"
+                className={({ isActive }) => (isActive ? 'hdr-text-link hdr-text-link--active' : 'hdr-text-link')}
+              >
+                Dashboard
+              </NavLink>
+              <button className="hdr-text-btn" type="button" onClick={logout}>
                 Logout
               </button>
             </>

@@ -39,3 +39,16 @@ export async function hydrateLastRoadmapFromServer(token) {
   }
 }
 
+export async function hydrateLastRoadmapFromServerFresh(token) {
+  if (!token) return { ok: false, state: null };
+  try {
+    const state = await loadState(token);
+    if (state) writeLastRoadmapLocal(state);
+    else localStorage.removeItem(KEY);
+    return { ok: true, state: state || null };
+  } catch (e) {
+    console.error(e);
+    return { ok: false, state: null };
+  }
+}
+

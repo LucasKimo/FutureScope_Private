@@ -205,3 +205,50 @@ body{
 .app-header .brand span{
   font-weight:700;
 }
+
+.hdr-text-link{
+  color:var(--muted);
+  text-decoration:none;
+  font:inherit;
+  background:transparent;
+  border:none;
+  padding:0;
+  cursor:pointer;
+}
+
+.hdr-text-link--active{
+  color:var(--text);
+  position:relative;
+}
+
+.hdr-text-link--active::after{
+  content:"";
+  position:absolute;
+  left:-6px;
+  right:-6px;
+  bottom:-18px;
+  height:2px;
+  background:#000;
+  pointer-events:none;
+}
+
+.hdr-text-btn{
+  color:var(--muted);
+  font:inherit;
+  background:transparent;
+  border:none;
+  padding:0;
+  cursor:pointer;
+}
+
+.hdr-text-link:hover,
+.hdr-text-btn:hover{
+  color:var(--text);
+}
+
+.hdr-text-link:focus-visible,
+.hdr-text-btn:focus-visible{
+  outline:none;
+  box-shadow:0 0 0 3px rgba(89, 86, 225, 0.25);
+  border-radius:8px;
+}

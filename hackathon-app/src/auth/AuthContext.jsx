@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { login as loginApi, me as meApi, register as registerApi } from '../services/authApi';
-import { hydrateLastRoadmapFromServer } from '../services/persist';
+import { hydrateLastRoadmapFromServerFresh } from '../services/persist';
 
 const AuthContext = createContext(null);
 const TOKEN_KEY = 'fs_token';
@@ -25,7 +25,7 @@ export function AuthProvider({ children }) {
         const body = await meApi(token);
         if (!active) return;
         setUser(body.user || null);
-        await hydrateLastRoadmapFromServer(token);
+        await hydrateLastRoadmapFromServerFresh(token);
       } catch {
         if (!active) return;
         localStorage.removeItem(TOKEN_KEY);
@@ -52,7 +52,7 @@ export function AuthProvider({ children }) {
         localStorage.setItem(TOKEN_KEY, body.token);
         setToken(body.token);
         setUser(body.user || null);
-        await hydrateLastRoadmapFromServer(body.token);
+        await hydrateLastRoadmapFromServerFresh(body.token);
         return body;
       },
       async register(email, password) {
@@ -60,7 +60,7 @@ export function AuthProvider({ children }) {
         localStorage.setItem(TOKEN_KEY, body.token);
         setToken(body.token);
         setUser(body.user || null);
-        await hydrateLastRoadmapFromServer(body.token);
+        await hydrateLastRoadmapFromServerFresh(body.token);
         return body;
       },
       logout() {
