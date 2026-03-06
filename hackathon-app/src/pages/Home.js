@@ -12,7 +12,7 @@ const Home = () => {
   };
 
   const handleDashboardClick = () => {
-    navigate('/main_dashboard');
+    navigate('/dashboard');
   };
 
   return (
@@ -54,7 +54,7 @@ const Home = () => {
               onClick={handleDashboardClick}
               style={{ display: 'flex', alignItems: 'center' }}
             >
-              <span style={{ lineHeight: '24px' }}>Main Dashboard</span>
+              <span style={{ lineHeight: '24px' }}>View Goals</span>
             </button>
           )}
         </div>

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
-import { readLastRoadmap } from '../services/persist';
+import { readAllGoals } from '../services/persist';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -22,9 +22,9 @@ export default function Login() {
   const resolveNextPath = useCallback(() => {
     if (fromPath) return fromPath;
 
-    const seed = readLastRoadmap();
-    const hasDashboard = Boolean(seed?.goal) && Boolean(seed?.roadmap);
-    return hasDashboard ? '/main_dashboard' : '/add_goals';
+    const goals = readAllGoals();
+    const hasAnyGoal = goals.some((g) => Boolean(g?.goal) && Boolean(g?.roadmap));
+    return hasAnyGoal ? '/dashboard' : '/add_goals';
   }, [fromPath]);
 
   useEffect(() => {

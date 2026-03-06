@@ -1,12 +1,16 @@
-import { Link, NavLink } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import icon from './icon_app.svg';
 import { useAuth } from '../auth/AuthContext';
 
 export default function Header() {
   const { token, logout } = useAuth();
+  const location = useLocation();
+  const dashboardActive =
+    location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/main_dashboard');
+  const isMainDash = location.pathname.startsWith('/main_dashboard');
 
   return (
-    <header className="app-header">
+    <header className={`app-header ${isMainDash ? 'app-header--main-dash' : ''}`}>
       <div className="brand" style={{ justifyContent: 'space-between' }}>
         <Link to="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit', gap: '8px' }}>
           <img src={icon} alt="FutureScope" className="logo" />
@@ -16,12 +20,9 @@ export default function Header() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 40 }}>
           {token ? (
             <>
-              <NavLink
-                to="/main_dashboard"
-                className={({ isActive }) => (isActive ? 'hdr-text-link hdr-text-link--active' : 'hdr-text-link')}
-              >
-                Dashboard
-              </NavLink>
+              <Link className={dashboardActive ? 'hdr-text-link hdr-text-link--active' : 'hdr-text-link'} to="/dashboard">
+                Goals
+              </Link>
               <button className="hdr-text-btn" type="button" onClick={logout}>
                 Logout
               </button>

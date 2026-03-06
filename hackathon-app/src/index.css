@@ -41,6 +41,10 @@ body{
   padding: 2rem;
 }
 
+.gs-page--top{
+  align-items:flex-start;
+}
+
 .gs-page-add-goals {
   position: fixed;  
 }
@@ -221,12 +225,13 @@ body{
   position:relative;
 }
 
+/* Underline for active link */
 .hdr-text-link--active::after{
   content:"";
   position:absolute;
   left:-6px;
   right:-6px;
-  bottom:-18px;
+  bottom:-18.3px;
   height:2px;
   background:#000;
   pointer-events:none;
@@ -251,4 +256,83 @@ body{
   outline:none;
   box-shadow:0 0 0 3px rgba(89, 86, 225, 0.25);
   border-radius:8px;
+}
+
+.goal-list{
+  list-style:none;
+  margin:0;
+  padding:0;
+  display:grid;
+  gap:14px;
+}
+
+.goal-section{
+  max-width:none;
+  width:100%;
+}
+
+.goal-row{
+  width:100%;
+  text-align:left;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:50px;
+  padding:16px 18px;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:16px;
+  cursor:pointer;
+  min-height:80px;
+}
+
+.goal-row-main{
+  flex:1;
+  min-width:0;
+}
+
+.goal-row:hover{
+  border-color:#CBD5E1;
+  background:#FCFCFF;
+}
+
+.goal-row:focus-visible{
+  outline:none;
+  box-shadow:0 0 0 3px rgba(89, 86, 225, 0.25);
+}
+
+.goal-row-title{
+  font-weight:600;
+  font-size:15px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.goal-row-sub{
+  margin-top:5px;
+  color:var(--muted);
+  font-size:13px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.goal-row-meta{
+  font-weight:800;
+  font-size:13px;
+  color:var(--brand);
+  text-transform:uppercase;
+  letter-spacing:.3px;
+  flex:0 0 auto;
+}
+
+
+/* Main Dashboard Header */
+.app-header--main-dash .hdr-text-link--active::after{
+  display: none;
+}
+
+.app-header--main-dash .hdr-text-link--active{
+  color: var(--muted);
 }
