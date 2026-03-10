@@ -28,7 +28,7 @@ export default function Header() {
               </button>
             </>
           ) : (
-            <Link className="btn-primary" to="/login" style={{ textDecoration: 'none', padding: '8px 12px' }}>
+            <Link className="hdr-text-btn" to="/login" style={{ textDecoration: 'none' }}>
               Login
             </Link>
           )}

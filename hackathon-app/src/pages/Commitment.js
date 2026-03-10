@@ -1,31 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Steps from '../components/Steps';
-import { useAuth } from '../auth/AuthContext';
-import { hydrateLastRoadmapFromServer, readLastRoadmap } from '../services/persist';
 
 export default function DedicatedTime() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { token } = useAuth();
 
   const [estimate, setEstimate] = useState(null);
 
   useEffect(() => {
-    const local = readLastRoadmap();
-    if (local) setEstimate(local.estimate || null);
-
-    let active = true;
-    (async () => {
-      if (!token) return;
-      const remote = await hydrateLastRoadmapFromServer(token);
-      if (!active || !remote) return;
-      setEstimate(remote.estimate || null);
-    })();
-    return () => {
-      active = false;
-    };
-  }, [token]);
+    const flow = location.state?.flow;
+    if (!flow) return;
+    setEstimate(flow.estimate || null);
+  }, [location.state]);
 
   const start = useMemo(() => {
     return location.state?.start ? new Date(location.state.start) : null;
@@ -157,7 +144,13 @@ export default function DedicatedTime() {
             disabled={totalHours <= 0}
             onClick={() =>
               navigate('/add_goals/goal_summary', {
-                state: { hours, start: location.state?.start, end: location.state?.end, totalHours }
+                state: {
+                  hours,
+                  start: location.state?.start,
+                  end: location.state?.end,
+                  totalHours,
+                  flow: location.state?.flow || null
+                }
               })
             }
           >

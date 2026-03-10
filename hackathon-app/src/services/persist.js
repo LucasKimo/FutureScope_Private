@@ -1,6 +1,7 @@
 import { loadState, saveState } from './stateApi';
 
 const KEY = 'lastRoadmap';
+const DRAFT_KEY = 'draftRoadmapFlow';
 
 function hashGoal(value) {
   const s = String(value || '').trim().toLowerCase();
@@ -62,6 +63,22 @@ function getActiveGoal(state) {
   return state.goals.find((g) => g.id === activeId) || state.goals[0] || null;
 }
 
+function mergeRoadmapSnapshot(existing, value) {
+  const now = new Date().toISOString();
+  const goal = value?.goal ?? existing?.goal ?? '';
+  const id = value?.id ? String(value.id) : hashGoal(goal);
+
+  return {
+    id,
+    goal,
+    roadmap: value?.roadmap ?? existing?.roadmap ?? null,
+    checked: value?.checked ?? existing?.checked ?? {},
+    estimate: value?.estimate ?? existing?.estimate ?? null,
+    createdAt: existing?.createdAt || now,
+    updatedAt: now
+  };
+}
+
 export function readLastRoadmap() {
   try {
     const raw = localStorage.getItem(KEY);
@@ -77,6 +94,34 @@ export function writeLastRoadmapLocal(value) {
   localStorage.setItem(KEY, JSON.stringify(value));
 }
 
+export function readDraftRoadmap() {
+  try {
+    const raw = sessionStorage.getItem(DRAFT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+    if (typeof parsed.goal !== 'string') return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+export function writeDraftRoadmap(value) {
+  const existing = readDraftRoadmap();
+  const next = mergeRoadmapSnapshot(existing, value);
+  sessionStorage.setItem(DRAFT_KEY, JSON.stringify(next));
+  return next;
+}
+
+export function clearDraftRoadmap() {
+  sessionStorage.removeItem(DRAFT_KEY);
+}
+
+export function readRoadmapForFlow() {
+  return readDraftRoadmap() || readLastRoadmap();
+}
+
 export function readAllGoals() {
   try {
     const raw = localStorage.getItem(KEY);
@@ -89,23 +134,12 @@ export function readAllGoals() {
 }
 
 export async function writeLastRoadmap(value, token) {
-  const now = new Date().toISOString();
   const raw = readLastRoadmapLocalRaw();
   const state = normalizeGoalsState(raw);
-
-  const goal = value?.goal;
-  const id = value?.id ? String(value.id) : hashGoal(goal);
-
-  const existing = state.goals.find((g) => g.id === id);
-  const nextGoal = {
-    id,
-    goal: goal || existing?.goal || '',
-    roadmap: value?.roadmap ?? existing?.roadmap ?? null,
-    checked: value?.checked ?? existing?.checked ?? {},
-    estimate: value?.estimate ?? existing?.estimate ?? null,
-    createdAt: existing?.createdAt || now,
-    updatedAt: now
-  };
+  const inputId = value?.id ? String(value.id) : hashGoal(value?.goal);
+  const existing = state.goals.find((g) => g.id === inputId);
+  const nextGoal = mergeRoadmapSnapshot(existing, value);
+  const id = nextGoal.id;
 
   const goals = state.goals.filter((g) => g.id !== id);
   goals.unshift(nextGoal);

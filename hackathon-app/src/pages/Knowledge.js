@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Steps from '../components/Steps';
 import RoadmapChecklist from '../components/RoadmapChecklist';
+import BackButton from '../components/BackButton';
 import { getEstimate } from '../services/estimateApi';
-import { useAuth } from '../auth/AuthContext';
-import { hydrateLastRoadmapFromServer, readLastRoadmap, writeLastRoadmap } from '../services/persist';
 
 export default function Knowledge() {
   const navigate = useNavigate();
-  const { token } = useAuth();
+  const location = useLocation();
 
   const [goal, setGoal] = useState('');
   const [roadmap, setRoadmap] = useState(null);
@@ -17,35 +16,18 @@ export default function Knowledge() {
   const [estimating, setEstimating] = useState(false);
 
   useEffect(() => {
-    const local = readLastRoadmap();
-    if (local) {
-      setGoal(local.goal || '');
-      setRoadmap(local.roadmap || null);
-      setChecked(local.checked || {});
-      setEstimate(local.estimate || null);
-    }
-
-    let active = true;
-    (async () => {
-      if (!token) return;
-      const remote = await hydrateLastRoadmapFromServer(token);
-      if (!active || !remote) return;
-      setGoal(remote.goal || '');
-      setRoadmap(remote.roadmap || null);
-      setChecked(remote.checked || {});
-      setEstimate(remote.estimate || null);
-    })();
-
-    return () => {
-      active = false;
-    };
-  }, [token]);
+    const flow = location.state?.flow;
+    if (!flow) return;
+    setGoal(flow.goal || '');
+    setRoadmap(flow.roadmap || null);
+    setChecked(flow.checked || {});
+    setEstimate(flow.estimate || null);
+  }, [location.state]);
 
   const onToggle = (id) => {
     const next = { ...checked, [id]: !checked[id] };
     setChecked(next);
     setEstimate(null);
-    writeLastRoadmap({ goal, roadmap, checked: next, estimate: null }, token);
   };
 
   const handleContinueTimeline = async () => {
@@ -58,8 +40,11 @@ export default function Knowledge() {
     try {
       const nextEstimate = await getEstimate({ goal, roadmap, checked });
       setEstimate(nextEstimate);
-      await writeLastRoadmap({ goal, roadmap, checked, estimate: nextEstimate }, token);
-      navigate('/add_goals/timeline');
+      navigate('/add_goals/timeline', {
+        state: {
+          flow: { goal, roadmap, checked, estimate: nextEstimate }
+        }
+      });
     } catch (e) {
       alert(e.message || 'Failed to calculate estimate. Please try again.');
     } finally {
@@ -133,7 +118,7 @@ export default function Knowledge() {
         </section>
 
         <div className="gs-actions" style={{ marginTop: 24 }}>
-          <button className="btn-outline" type="button">Save Draft</button>
+          <BackButton>Back</BackButton>
           <button
             className="btn-primary"
             type="button"

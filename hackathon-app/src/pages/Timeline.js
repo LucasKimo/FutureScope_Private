@@ -1,13 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Steps from '../components/Steps';
-import { useAuth } from '../auth/AuthContext';
-import { hydrateLastRoadmapFromServer, readLastRoadmap } from '../services/persist';
 
 export default function SetDate() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { token } = useAuth();
 
   const [start, setStart] = useState('');
   const [end, setEnd] = useState('');
@@ -15,24 +12,11 @@ export default function SetDate() {
   const [estimate, setEstimate] = useState(null);
 
   useEffect(() => {
-    const local = readLastRoadmap();
-    if (local) {
-      setGoal(local.goal || '');
-      setEstimate(local.estimate || null);
-    }
-
-    let active = true;
-    (async () => {
-      if (!token) return;
-      const remote = await hydrateLastRoadmapFromServer(token);
-      if (!active || !remote) return;
-      setGoal(remote.goal || '');
-      setEstimate(remote.estimate || null);
-    })();
-    return () => {
-      active = false;
-    };
-  }, [token]);
+    const flow = location.state?.flow;
+    if (!flow) return;
+    setGoal(flow.goal || '');
+    setEstimate(flow.estimate || null);
+  }, [location.state]);
 
   const initialHours = location.state?.hours || estimate?.suggested_hours_per_week?.mid || 7;
   const hours = Number(initialHours);
@@ -161,7 +145,11 @@ export default function SetDate() {
             className="btn-primary"
             type="button"
             disabled={!isValid || !estimate}
-            onClick={() => navigate('/add_goals/commitment', { state: { start, end, hours, totalHours } })}
+            onClick={() =>
+              navigate('/add_goals/commitment', {
+                state: { start, end, hours, totalHours, flow: location.state?.flow || null }
+              })
+            }
             style={!isValid || !estimate ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
           >
             Continue to Commitment

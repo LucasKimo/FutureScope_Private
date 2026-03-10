@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
-import { hydrateLastRoadmapFromServer, readLastRoadmap } from '../services/persist';
+import { writeLastRoadmap } from '../services/persist';
 
 function formatDate(value) {
   if (!value) return 'Not set';
@@ -17,26 +17,35 @@ export default function GoalSummary() {
 
   const [goal, setGoal] = useState('Your goal');
   const [roadmap, setRoadmap] = useState(null);
+  const [checked, setChecked] = useState({});
+  const [estimate, setEstimate] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const local = readLastRoadmap();
-    if (local) {
-      setGoal(local.goal || 'Your goal');
-      setRoadmap(local.roadmap || null);
+    const flow = location.state?.flow;
+    if (!flow) return;
+    setGoal(flow.goal || 'Your goal');
+    setRoadmap(flow.roadmap || null);
+    setChecked(flow.checked || {});
+    setEstimate(flow.estimate || null);
+  }, [location.state]);
+
+  const handleFinishSetup = async () => {
+    if (!goal || !roadmap) {
+      alert('No goal setup data found. Please complete the setup flow again.');
+      return;
     }
 
-    let active = true;
-    (async () => {
-      if (!token) return;
-      const remote = await hydrateLastRoadmapFromServer(token);
-      if (!active || !remote) return;
-      setGoal(remote.goal || 'Your goal');
-      setRoadmap(remote.roadmap || null);
-    })();
-    return () => {
-      active = false;
-    };
-  }, [token]);
+    setSaving(true);
+    try {
+      await writeLastRoadmap({ goal, roadmap, checked, estimate }, token);
+      navigate('/main_dashboard');
+    } catch (e) {
+      alert(e.message || 'Failed to save your goal. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const start = location.state?.start;
   const end = location.state?.end;
@@ -112,8 +121,8 @@ export default function GoalSummary() {
           <button className="btn-outline" type="button" onClick={() => navigate(-1)}>
             Back
           </button>
-          <button className="btn-primary" type="button" onClick={() => navigate('/main_dashboard')}>
-            View My Dashboard
+          <button className="btn-primary" type="button" onClick={handleFinishSetup} disabled={saving}>
+            {saving ? 'Saving...' : 'View My Dashboard'}
           </button>
         </div>
       </main>

@@ -31,6 +31,14 @@ export default function Login() {
     if (!loading && token) navigate(resolveNextPath(), { replace: true });
   }, [loading, token, resolveNextPath, navigate]);
 
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, []);
+
   const onSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -49,7 +57,7 @@ export default function Login() {
 
   return (
     <div className="gs-page">
-      <main className="gs-container" style={{ maxWidth: 520 }}>
+      <main className="gs-container" style={{ width: 'min(520px, 100%)' }}>
         <header className="gs-hero">
           <h1>{mode === 'register' ? 'Create Account' : 'Login'}</h1>
           <p className="gs-sub" style={{ marginTop: 8 }}>
@@ -59,7 +67,7 @@ export default function Login() {
           </p>
         </header>
 
-        <section className="gs-card" style={{ maxWidth: 520 }}>
+        <section className="gs-card" style={{ width: '100%', maxWidth: 400 }}>
           <form onSubmit={onSubmit} style={{ display: 'grid', gap: 12 }}>
             <label style={{ display: 'grid', gap: 6 }}>
               <span style={{ fontSize: 13, fontWeight: 700 }}>Email</span>
@@ -100,6 +108,19 @@ export default function Login() {
               />
             </label>
 
+            <div style={{ fontSize: 13, color: 'var(--muted)', textAlign: 'center' }}>
+              {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
+              <button
+                type="button"
+                className="hdr-text-link"
+                onClick={() => setMode((m) => (m === 'login' ? 'register' : 'login'))}
+                disabled={busy || loading}
+                style={{ textDecoration: 'underline' }}
+              >
+                {mode === 'login' ? 'Create account' : 'Login'}
+              </button>
+            </div>
+
             {error && (
               <div
                 className="gs-card"
@@ -115,16 +136,13 @@ export default function Login() {
               </div>
             )}
 
-            <div className="gs-actions" style={{ justifyContent: 'space-between' }}>
+            <div className="gs-actions" style={{ justifyContent: 'center', marginTop: 8 }}>
               <button
-                type="button"
-                className="btn-outline"
-                onClick={() => setMode((m) => (m === 'login' ? 'register' : 'login'))}
+                className="btn-primary"
+                type="submit"
                 disabled={busy || loading}
+                style={{ minWidth: 260, padding: '12px 28px' }}
               >
-                {mode === 'login' ? 'Create account' : 'I have an account'}
-              </button>
-              <button className="btn-primary" type="submit" disabled={busy || loading}>
                 {busy ? 'Working...' : mode === 'register' ? 'Register' : 'Login'}
               </button>
             </div>

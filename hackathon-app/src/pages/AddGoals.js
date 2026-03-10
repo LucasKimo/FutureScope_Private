@@ -1,28 +1,13 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { getRoadmap } from '../services/roadmapApi';
 import { useNavigate } from 'react-router-dom';
 import Steps from '../components/Steps';
-import { useAuth } from '../auth/AuthContext';
-import { writeLastRoadmap } from '../services/persist';
 
 export default function AddGoals() {
   const navigate = useNavigate();
-  const { token } = useAuth();
 
   const [goal, setGoal] = useState('');
   const [loading, setLoading] = useState(false); 
-
-  // goal 기반 로컬 스토리지 키 (체크 상태 저장용)
-  function hashGoal(s) {
-    let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
-    return String(h);
-  }
-  const storageKey = useMemo(() => `roadmapChecks::${hashGoal(goal.trim())}`, [goal]);
-
-  const loadChecks = () => {
-    try { return JSON.parse(localStorage.getItem(storageKey) || '{}'); }
-    catch { return {}; }
-  };
 
   // Continue 클릭 시: 자동 생성 → localStorage 저장 → Knowledge로 이동
   const handleContinue = async () => {
@@ -36,13 +21,14 @@ export default function AddGoals() {
       // AI로 체크리스트 생성
       const roadmap = await getRoadmap(g);
       console.log(roadmap)
-      const checked = loadChecks(); // 같은 목표로 이전 체크 내역이 있으면 복원
+      const checked = {};
 
-      // Knowledge 페이지에서 사용할 데이터 저장
-      await writeLastRoadmap({ goal: g, roadmap, checked }, token);
-
-      // 다음 페이지로 이동
-      navigate('/add_goals/previous_knowledge');
+      // Move to next page
+      navigate('/add_goals/previous_knowledge', {
+        state: {
+          flow: { goal: g, roadmap, checked, estimate: null }
+        }
+      });
     } catch (e) {
       alert(e.message || 'Failed to generate checklist. Please try again.');
     } finally {
@@ -77,8 +63,6 @@ export default function AddGoals() {
 
 
         <div className="gs-actions" style={{marginTop:24}}>
-
-          <button type="button" className="btn-outline" disabled={loading}>Save Draft</button>
           <button
             type="button"
             className="btn-primary"
