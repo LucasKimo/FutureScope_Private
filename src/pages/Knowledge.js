@@ -59,10 +59,14 @@ export default function Knowledge() {
   const doneItems = Object.values(checked).filter(Boolean).length;
   const progress = totalItems ? Math.round((doneItems / totalItems) * 100) : 0;
 
+  const handleStepClick = (step) => {
+    if (step === 1) navigate('/add_goals', { state: { goal } });
+  };
+
   return (
     <div className="gs-page">
       <main className="gs-container">
-        <Steps active={2} />
+        <Steps active={2} onStepClick={handleStepClick} />
 
         <header className="gs-hero">
           <h1>

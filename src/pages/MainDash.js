@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getDashboardData } from '../services/dashboardApi';
 import { useAuth } from '../auth/AuthContext';
 import { hydrateLastRoadmapFromServer, readLastRoadmap, writeLastRoadmap } from '../services/persist';
@@ -33,6 +33,54 @@ function readDashboardSeed() {
   };
 }
 
+const SPARK_COLORS = ['#5956E1', '#FFD166', '#06D6A0', '#EF476F', '#FFEAA7', '#A29BFE', '#FF6B6B', '#ffffff', '#FFA500', '#00CEC9'];
+
+function Sparkles({ onDone }) {
+  useEffect(() => {
+    const t = setTimeout(onDone, 4500);
+    return () => clearTimeout(t);
+  }, [onDone]);
+
+  const particles = useMemo(() => {
+    return Array.from({ length: 150 }, (_, i) => ({
+      id: i,
+      left: 5 + Math.random() * 90,
+      bottom: 2 + Math.random() * 12,
+      color: SPARK_COLORS[Math.floor(Math.random() * SPARK_COLORS.length)],
+      size: 4 + Math.random() * 7,
+      isRect: Math.random() > 0.6,
+      delay: Math.random() * 2.2,
+      duration: 1.4 + Math.random() * 2,
+      dx: (Math.random() - 0.5) * 380,
+      dy: -(35 + Math.random() * 55),
+    }));
+  }, []);
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 9999, overflow: 'hidden' }}>
+      {particles.map((p) => (
+        <div
+          key={p.id}
+          className="sparkle-particle"
+          style={{
+            left: `${p.left}%`,
+            bottom: `${p.bottom}%`,
+            width: p.isRect ? p.size * 0.4 : p.size,
+            height: p.isRect ? p.size * 2.5 : p.size,
+            borderRadius: p.isRect ? '2px' : '50%',
+            background: p.color,
+            boxShadow: `0 0 ${p.size * 2}px 1px ${p.color}99`,
+            '--spark-dx': `${p.dx}px`,
+            '--spark-dy': `${p.dy}vh`,
+            animationDuration: `${p.duration}s`,
+            animationDelay: `${p.delay}s`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function MainDash() {
   const { token } = useAuth();
   const [seed, setSeed] = useState(null);
@@ -41,6 +89,8 @@ export default function MainDash() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showAllRoadmap, setShowAllRoadmap] = useState(false);
+  const [celebrated, setCelebrated] = useState(false);
+  const [showSparkles, setShowSparkles] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -127,6 +177,17 @@ export default function MainDash() {
   const progressPct = totalItems ? Math.round((doneItems / totalItems) * 100) : 0;
   const progressSafe = Math.max(0, Math.min(100, progressPct));
 
+  useEffect(() => {
+    if (totalItems > 0 && doneItems === totalItems && !celebrated) {
+      setShowSparkles(true);
+      setCelebrated(true);
+    } else if (doneItems < totalItems && celebrated) {
+      setCelebrated(false);
+    }
+  }, [doneItems, totalItems, celebrated]);
+
+  const handleSparklesDone = useCallback(() => setShowSparkles(false), []);
+
   const roadmapPriorityById = useMemo(() => {
     const aiMilestones = dashboard?.next_milestones || [];
     const aiPriorityByTitle = new Map(
@@ -179,6 +240,7 @@ export default function MainDash() {
 
   return (
     <div className="gs-page">
+      {showSparkles && <Sparkles onDone={handleSparklesDone} />}
       <main className="gs-container">
         <section
           aria-label="goal hero"

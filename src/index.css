@@ -11,6 +11,7 @@
   --card:#FFFFFF;
   --border:#E6E8EE;
   --shadow:0 8px 24px rgba(0,0,0,.06);
+  color-scheme: light;
 }
 
 *{box-sizing:border-box}
@@ -51,6 +52,11 @@ body{
 /* =========================
    Steps progress
    ========================= */
+.gs-steps {
+  max-width: 940px;
+  width: 100%;
+  margin: 0 auto;
+}
 .gs-steps-bar {
   position: relative;
   height: 8px;                 /* thicker for visibility */
@@ -76,6 +82,27 @@ body{
 .gs-steps-list li.active {
   font-weight: bold;
   color: var(--brand);
+}
+.gs-steps-list li.done {
+  color: var(--brand);
+}
+.gs-step-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: 14px;
+  color: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.gs-step-btn:hover {
+  opacity: 0.7;
+}
+.gs-steps-list li.locked {
+  color: #9CA3AF;
+  cursor: not-allowed;
 }
 
 /* =========================
@@ -142,6 +169,71 @@ body{
 .orange{background:#FFEED5; color:#B45309}
 
 /* =========================
+   Date inputs
+   ========================= */
+.date-input {
+  color-scheme: light;
+}
+.date-input:focus {
+  outline: none;
+  border-color: var(--brand) !important;
+  box-shadow: 0 0 0 3px rgba(89, 86, 225, 0.15);
+}
+.goal-input:focus {
+  outline: none;
+  border-color: var(--brand) !important;
+  box-shadow: 0 0 0 3px rgba(89, 86, 225, 0.15);
+}
+
+/* =========================
+   Range input (commitment slider)
+   ========================= */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 999px;
+  background: #E5E7EB;
+  outline: none;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: transparent;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--brand);
+  cursor: pointer;
+  margin-top: -7px;
+  box-shadow: 0 0 0 3px rgba(89, 86, 225, 0.2);
+}
+input[type="range"]::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: #E5E7EB;
+}
+input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+  background: var(--brand);
+  cursor: pointer;
+  box-shadow: 0 0 0 3px rgba(89, 86, 225, 0.2);
+}
+input[type="range"]::-moz-range-progress {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--brand);
+}
+
+/* =========================
    Actions
    ========================= */
 .gs-actions{
@@ -172,12 +264,30 @@ body{
 }
 
 /* =========================
+   Celebration sparkles
+   ========================= */
+.sparkle-particle {
+  position: absolute;
+  opacity: 0;
+  animation-name: sparkle-fly;
+  animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  animation-fill-mode: forwards;
+}
+
+@keyframes sparkle-fly {
+  0%   { opacity: 0;   transform: translateY(0)                          translateX(0)                          scale(0.3) rotate(0deg); }
+  8%   { opacity: 1;   transform: translateY(calc(var(--spark-dy) * .08)) translateX(calc(var(--spark-dx) * .08)) scale(1)   rotate(45deg); }
+  100% { opacity: 0;   transform: translateY(var(--spark-dy))             translateX(var(--spark-dx))             scale(0.1) rotate(360deg); }
+}
+
+/* =========================
    Responsive tweaks
    ========================= */
 @media (max-width:720px){
   .gs-hero h1{font-size:22px}
   .gs-stats{gap:10px}
   .gs-stat{min-width:46%}
+  .rc-grid{grid-template-columns:1fr}
 }
 
 

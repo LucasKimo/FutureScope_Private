@@ -1,12 +1,17 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { getRoadmap } from '../services/roadmapApi';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Steps from '../components/Steps';
 
 export default function AddGoals() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [goal, setGoal] = useState('');
+
+  useEffect(() => {
+    if (location.state?.goal) setGoal(location.state.goal);
+  }, [location.state]);
   const [loading, setLoading] = useState(false); 
 
   // Continue 클릭 시: 자동 생성 → localStorage 저장 → Knowledge로 이동
@@ -54,6 +59,7 @@ export default function AddGoals() {
             onChange={(e)=> setGoal(e.target.value)}
             rows={3}
             placeholder="Describe your main goal here..."
+            className="goal-input"
             style={{
               width:'100%', padding:'14px 12px', border:'1px solid var(--border)', borderRadius:12,
               background:'#fff', fontSize:14, resize:'vertical'

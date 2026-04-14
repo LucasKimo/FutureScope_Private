@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import Steps from '../components/Steps';
 import { writeLastRoadmap } from '../services/persist';
 
 function formatDate(value) {
@@ -65,28 +66,25 @@ export default function GoalSummary() {
     return (roadmap?.categories || []).reduce((sum, c) => sum + (c.items?.length || 0), 0);
   }, [roadmap]);
 
+  const handleStepClick = (step) => {
+    const { flow, start, end, hours, totalHours } = location.state || {};
+    if (step === 1) navigate('/add_goals', { state: { goal } });
+    else if (step === 2) navigate('/add_goals/previous_knowledge', { state: { flow } });
+    else if (step === 3) navigate('/add_goals/timeline', { state: { flow, start, end } });
+    else if (step === 4) navigate('/add_goals/commitment', { state: { flow, start, end, hours, totalHours } });
+  };
+
   return (
-    <div className="gs-page">
+    <div className="gs-page gs-page--top">
       <main className="gs-container">
-        <div className="gs-steps">
-          <div className="gs-steps-bar">
-            <div className="gs-steps-fill" style={{ width: '100%' }} />
-          </div>
-          <ul className="gs-steps-list" aria-label="setup steps">
-            <li className="complete">Your Goal</li>
-            <li className="complete">Timeline</li>
-            <li className="complete">Knowledge</li>
-            <li className="complete">Commitment</li>
-            <li className="complete active">Summary</li>
-          </ul>
-        </div>
+        <Steps active={5} onStepClick={handleStepClick} />
 
         <header className="gs-hero">
           <h1>Almost There! Here Is Your<br />Goal Summary &amp; Roadmap</h1>
           <p className="gs-sub">Ready to see your roadmap and progress at a glance?</p>
         </header>
 
-        <section className="gs-card" aria-labelledby="summary-title">
+        <section className="gs-card" aria-labelledby="summary-title" style={{ maxWidth: 940 }}>
           <h3 id="summary-title" className="gs-card-title">Your Personalised Plan</h3>
 
           <div className="gs-plan-box">

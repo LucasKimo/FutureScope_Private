@@ -16,6 +16,8 @@ export default function SetDate() {
     if (!flow) return;
     setGoal(flow.goal || '');
     setEstimate(flow.estimate || null);
+    if (location.state?.start) setStart(location.state.start);
+    if (location.state?.end) setEnd(location.state.end);
   }, [location.state]);
 
   const initialHours = location.state?.hours || estimate?.suggested_hours_per_week?.mid || 7;
@@ -39,10 +41,16 @@ export default function SetDate() {
     fits = timelineWeeks != null ? estWeeks <= timelineWeeks : null;
   }
 
+  const handleStepClick = (step) => {
+    const flow = location.state?.flow;
+    if (step === 1) navigate('/add_goals', { state: { goal } });
+    else if (step === 2) navigate('/add_goals/previous_knowledge', { state: { flow } });
+  };
+
   return (
     <div className="gs-page">
       <main className="gs-container">
-        <Steps active={3} />
+        <Steps active={3} onStepClick={handleStepClick} />
 
         <header className="gs-hero">
           <h1>
@@ -106,13 +114,15 @@ export default function SetDate() {
                 value={start}
                 onChange={(e) => setStart(e.target.value)}
                 aria-label="Start date"
+                className="date-input"
                 style={{
                   width: '100%',
                   padding: '14px 12px',
                   border: '1px solid var(--border)',
                   borderRadius: 12,
                   background: '#fff',
-                  fontSize: 14
+                  fontSize: 14,
+                  colorScheme: 'light'
                 }}
               />
             </div>
@@ -124,13 +134,15 @@ export default function SetDate() {
                 min={start || undefined}
                 onChange={(e) => setEnd(e.target.value)}
                 aria-label="End date"
+                className="date-input"
                 style={{
                   width: '100%',
                   padding: '14px 12px',
                   border: '1px solid var(--border)',
                   borderRadius: 12,
                   background: '#fff',
-                  fontSize: 14
+                  fontSize: 14,
+                  colorScheme: 'light'
                 }}
               />
             </div>

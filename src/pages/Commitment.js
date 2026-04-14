@@ -52,18 +52,27 @@ export default function DedicatedTime() {
     return { low: 5, mid: 7, high: 10 };
   }, [estimate, totalHours, weeks]);
 
-  const [hours, setHours] = useState(suggested.mid || 7);
+  const [hours, setHours] = useState(location.state?.hours || suggested.mid || 7);
 
   useEffect(() => {
-    setHours(suggested.mid || 7);
-  }, [suggested.mid]);
+    if (!location.state?.hours) {
+      setHours(suggested.mid || 7);
+    }
+  }, [suggested.mid, location.state?.hours]);
 
   const presets = [5, 7, 10, 15];
+
+  const handleStepClick = (step) => {
+    const { flow, start, end } = location.state || {};
+    if (step === 1) navigate('/add_goals', { state: { goal: flow?.goal } });
+    else if (step === 2) navigate('/add_goals/previous_knowledge', { state: { flow } });
+    else if (step === 3) navigate('/add_goals/timeline', { state: { flow, start, end } });
+  };
 
   return (
     <div className="gs-page">
       <main className="gs-container">
-        <Steps active={4} />
+        <Steps active={4} onStepClick={handleStepClick} />
 
         <header className="gs-hero">
           <h1>How Much Time Can You Dedicate?</h1>
@@ -111,7 +120,10 @@ export default function DedicatedTime() {
               step={1}
               value={hours}
               onChange={(e) => setHours(parseInt(e.target.value, 10))}
-              style={{ width: '100%' }}
+              style={{
+                width: '100%',
+                background: `linear-gradient(to right, var(--brand) 0%, var(--brand) ${((hours - 1) / 39) * 100}%, #E5E7EB ${((hours - 1) / 39) * 100}%, #E5E7EB 100%)`
+              }}
               aria-label="hours per week"
             />
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#6B7280', marginTop: 6 }}>
